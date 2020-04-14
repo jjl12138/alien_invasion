@@ -1,6 +1,6 @@
-# Shmup game - part 2
+# Shmup game - part 3
 # shmup.py
-# Enemy Sprites
+# Collisions and bullets
 import pygame
 import random
 
@@ -24,7 +24,7 @@ pygame.init()  # 启动pygame并初始化
 pygame.mixer.init()  # 声音初始化
 screen = pygame.display.set_mode((WIDTH, HEIGHT))  # 游戏屏幕，按照在配置常量中设置的大小创建
 pygame.display.set_caption("Shmup!")
-icon = pygame.image.load("img/p1_jump.png")
+icon = pygame.image.load("img/alien.ico")
 pygame.display.set_icon(icon)
 clock = pygame.time.Clock()  # 创建一个时钟以便于确保游戏能以指定的FPS运行
 
@@ -53,6 +53,11 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(bullet)
+        bullets.add(bullet)
+
 
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
@@ -74,8 +79,26 @@ class Mob(pygame.sprite.Sprite):
             self.speedy = random.randrange(1, 8)
 
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        # kill if it moves off the top of the screen
+        if self.rect.bottom < 0:
+            self.kill()
+
+
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 for i in range(8):
@@ -92,16 +115,31 @@ while running:
     # keep loop running at the right speed
     clock.tick(FPS)
 
+
     # Process input(events)    # 这是游戏主循环，通过变量running控制，如果需要
     for event in pygame.event.get():
         # check for closing window
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                player.shoot()
 
 
     # Update                   # 游戏结束的话直接将running设为False即可
     all_sprites.update()
 
+    # check to see if a bullet hit a mob
+    hits = pygame.sprite.groupcollide(mobs, bullets, True, True)
+    for hit in hits:
+        m = Mob()
+        all_sprites.add(m)
+        mobs.add(m)
+
+    # check to see if a mob hit the player
+    hits = pygame.sprite.spritecollide(player, mobs, False)
+    if hits:
+        running = False
 
     # Render(draw)             # 现在还没有确定具体的代码，先用一些基本代码填充，后续再补充
     screen.fill(BLACK)
