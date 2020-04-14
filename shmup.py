@@ -1,6 +1,6 @@
-# Shmup game - part 1
+# Shmup game - part 2
 # shmup.py
-# Play sprite and movement
+# Enemy Sprites
 import pygame
 import random
 
@@ -24,6 +24,8 @@ pygame.init()  # 启动pygame并初始化
 pygame.mixer.init()  # 声音初始化
 screen = pygame.display.set_mode((WIDTH, HEIGHT))  # 游戏屏幕，按照在配置常量中设置的大小创建
 pygame.display.set_caption("Shmup!")
+icon = pygame.image.load("img/p1_jump.png")
+pygame.display.set_icon(icon)
 clock = pygame.time.Clock()  # 创建一个时钟以便于确保游戏能以指定的FPS运行
 
 
@@ -52,9 +54,34 @@ class Player(pygame.sprite.Sprite):
             self.rect.left = 0
 
 
+class Mob(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((30, 40))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randrange(WIDTH - self.rect.width)
+        self.rect.y = random.randrange(-100, -40)
+        self.speedx = random.randrange(-3, 3)
+        self.speedy = random.randrange(1, 8)
+
+    def update(self):
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        if self.rect.top > HEIGHT + 10 or self.rect.left < -50 or self.rect.right > WIDTH + 20:
+            self.rect.x = random.randrange(WIDTH - self.rect.width)
+            self.rect.y = random.randrange(-100, -40)
+            self.speedy = random.randrange(1, 8)
+
+
 all_sprites = pygame.sprite.Group()
+mobs = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
+for i in range(8):
+    m = Mob()
+    all_sprites.add(m)
+    mobs.add(m)
 
 
 # Game Loop
@@ -85,3 +112,5 @@ while running:
 
 
 pygame.quit()
+
+
